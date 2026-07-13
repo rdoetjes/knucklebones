@@ -142,7 +142,7 @@ namespace KnuckleBones
                     Raylib.DrawLineEx(new Vector2(px - shiftAmount, py), new Vector2(x - shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), redShift);
                     Raylib.DrawLineEx(new Vector2(px + shiftAmount, py), new Vector2(x + shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), blueShift);
                 }
-                Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), starColor);
+                Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(2.0f / (z / 500), 0.5f, 5.0f), starColor);
             }
             Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 160));
         }
