@@ -1,3 +1,4 @@
 obj/
 bin/
 sbom.json
+.DS_Store
