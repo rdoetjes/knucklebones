@@ -11,10 +11,9 @@ namespace KnuckleBones
         public const int ScreenWidth = 720;
         public const int ScreenHeight = 700;
 
-        public static Font GameFont;
-        public static Texture2D[] WhiteDice = new Texture2D[7];
-        public static Texture2D[] BlackDice = new Texture2D[7];
-        public static Texture2D Background;
+        private static Font GameFont;
+        private readonly static Texture2D[] WhiteDice = new Texture2D[7];
+        private readonly static Texture2D[] BlackDice = new Texture2D[7];
 
         private struct Star
         {
@@ -23,8 +22,8 @@ namespace KnuckleBones
             public Color StarColor;
         }
 
-        private const int StarCount = 8000;
-        private static Star[] starfield = new Star[StarCount];
+        private const int StarCount = 2000;
+        private readonly static Star[] starfield = new Star[StarCount];
 
         public static void LoadResources()
         {
@@ -85,7 +84,7 @@ namespace KnuckleBones
 
             // Draw Gradient Vertical Divider (9 pixels wide for symmetry)
             DrawGradientLine(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 9);
-            
+
             DrawPlayerGrid(state.Player1Board, 40, true, Color.White);
             DrawPlayerGrid(state.Player2Board, 400, false, Color.White);
 
@@ -189,7 +188,7 @@ namespace KnuckleBones
                 {
                     int x = startX + col * spacing;
                     int y = 150 + row * spacing;
-                    
+
                     Rectangle rect = new Rectangle(x, y, 80, 80);
                     DrawGradientRoundedRect(rect, 0.2f, 9);
 
