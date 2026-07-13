@@ -8,7 +8,7 @@ namespace KnuckleBones
 {
     public class UI
     {
-        public const int ScreenWidth = 600;
+        public const int ScreenWidth = 720;
         public const int ScreenHeight = 700;
 
         public static Font GameFont;
@@ -83,14 +83,14 @@ namespace KnuckleBones
         {
             DrawWarpStarfield();
 
-            Color lightBlue = new Color(100, 200, 255, 255);
-            Raylib.DrawLineEx(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 2, lightBlue);
+            // Draw Gradient Vertical Divider (9 pixels wide for symmetry)
+            DrawGradientLine(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 9);
+            
+            DrawPlayerGrid(state.Player1Board, 40, true, Color.White);
+            DrawPlayerGrid(state.Player2Board, 400, false, Color.White);
 
-            DrawPlayerGrid(state.Player1Board, 20, true, lightBlue);
-            DrawPlayerGrid(state.Player2Board, 320, false, lightBlue);
-
-            Raylib.DrawTextEx(GameFont, $"Player: {state.Player1Score}", new Vector2(20, 560), 24, 2, Color.White);
-            Raylib.DrawTextEx(GameFont, $"AI: {state.Player2Score}", new Vector2(320, 560), 24, 2, Color.White);
+            Raylib.DrawTextEx(GameFont, $"Player: {state.Player1Score}", new Vector2(40, 560), 24, 2, Color.White);
+            Raylib.DrawTextEx(GameFont, $"AI: {state.Player2Score}", new Vector2(400, 560), 24, 2, Color.White);
 
             if (state.GameOver)
             {
@@ -169,9 +169,10 @@ namespace KnuckleBones
             Raylib.DrawLineEx(new Vector2(0, startY - 10), new Vector2(ScreenWidth, startY - 10), 1, Color.DarkGray);
             Raylib.DrawTextEx(GameFont, "Difficulty:", new Vector2(20, startY), 20, 2, Color.LightGray);
             Difficulty[] diffs = { Difficulty.Easy, Difficulty.Medium, Difficulty.Hard };
+            int startX = 210;
             for (int i = 0; i < diffs.Length; i++)
             {
-                int x = 150 + i * 120;
+                int x = startX + i * 120;
                 Rectangle rect = new Rectangle(x, startY - 10, 100, 40);
                 Raylib.DrawRectangleRec(rect, state.CurrentDifficulty == diffs[i] ? Color.SkyBlue : Color.DarkGray);
                 Raylib.DrawRectangleLinesEx(rect, 2, Color.White);
@@ -180,20 +181,68 @@ namespace KnuckleBones
             }
         }
 
-        private static void DrawPlayerGrid(int[][] grid, int startX, bool isWhite, Color lineColor)
+        private static void DrawPlayerGrid(int[][] grid, int startX, bool isWhite, Color baseColor)
         {
+            int spacing = 100; // Increased from 90 (80 size + 20 spacing)
             for (int col = 0; col < 3; col++)
                 for (int row = 0; row < 3; row++)
                 {
-                    int x = startX + col * 90;
-                    int y = 150 + row * 90;
-                    Raylib.DrawRectangleRoundedLinesEx(new Rectangle(x, y, 80, 80), 0.2f, 12, 2, lineColor);
+                    int x = startX + col * spacing;
+                    int y = 150 + row * spacing;
+                    
+                    Rectangle rect = new Rectangle(x, y, 80, 80);
+                    DrawGradientRoundedRect(rect, 0.2f, 9);
+
                     if (grid[col][row] > 0) {
                         Texture2D tex = isWhite ? WhiteDice[grid[col][row]] : BlackDice[grid[col][row]];
                         float scale = 80f / tex.Width * 0.8f;
                         Raylib.DrawTextureEx(tex, new Vector2(x + (80 - tex.Width * scale) / 2, y + (80 - tex.Height * scale) / 2), 0, scale, Color.White);
                     }
                 }
+        }
+
+        private static void DrawGradientLine(Vector2 start, Vector2 end, float totalWidth)
+        {
+            Color[] gradientColors = new Color[] {
+                new Color(0, 40, 120, 255),    // 1: Dark Blue (Outer)
+                new Color(0, 80, 200, 255),    // 2: Mid Blue
+                new Color(100, 200, 255, 255), // 3: Light Blue
+                new Color(200, 240, 255, 255), // 4: Very Light Blue
+                new Color(255, 255, 255, 255), // 5: Pure White (Center)
+                new Color(200, 240, 255, 255), // 6: Very Light Blue
+                new Color(100, 200, 255, 255), // 7: Light Blue
+                new Color(0, 80, 200, 255),    // 8: Mid Blue
+                new Color(0, 40, 120, 255)     // 9: Dark Blue (Inner)
+            };
+
+            float stepWidth = totalWidth / 9.0f;
+            for (int i = 0; i < 9; i++)
+            {
+                float currentThickness = totalWidth - (i * stepWidth);
+                Raylib.DrawLineEx(start, end, currentThickness, gradientColors[i]);
+            }
+        }
+
+        private static void DrawGradientRoundedRect(Rectangle rect, float roundness, float totalWidth)
+        {
+            Color[] gradientColors = new Color[] {
+                new Color(0, 40, 120, 255),    // 1: Dark Blue (Outer)
+                new Color(0, 80, 200, 255),    // 2: Mid Blue
+                new Color(100, 200, 255, 255), // 3: Light Blue
+                new Color(200, 240, 255, 255), // 4: Very Light Blue
+                new Color(255, 255, 255, 255), // 5: Pure White (Center)
+                new Color(200, 240, 255, 255), // 6: Very Light Blue
+                new Color(100, 200, 255, 255), // 7: Light Blue
+                new Color(0, 80, 200, 255),    // 8: Mid Blue
+                new Color(0, 40, 120, 255)     // 9: Dark Blue (Inner)
+            };
+
+            float stepWidth = totalWidth / 9.0f;
+            for (int i = 0; i < 9; i++)
+            {
+                float currentThickness = totalWidth - (i * stepWidth);
+                Raylib.DrawRectangleRoundedLinesEx(rect, roundness, 16, currentThickness, gradientColors[i]);
+            }
         }
     }
 }
