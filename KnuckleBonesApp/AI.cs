@@ -7,17 +7,15 @@ namespace KnuckleBones
 {
     public class AI
     {
-        public static int GetMove(GameState state)
+        public static int GetMove(GameState state, bool useRandom = true)
         {
             int depth = (int)state.CurrentDifficulty;
-            // Use a random seed for tie-breaking so it's not always picking the first column
-            var (bestScore, bestCol) = Minimax(state.Player1Board, state.Player2Board, state.CurrentDie, depth, false);
+            // Use a fixed seed for testing to avoid randomness in tests
+            var (bestScore, bestCol) = Minimax(state.Player1Board, state.Player2Board, state.CurrentDie, depth, false, useRandom: useRandom);
             return bestCol;
         }
 
-        // Knucklebones is a game of perfect information regarding current state but random future (dice).
-        // For a stronger "Hard" AI, we use Expectiminimax or a weighted heuristic.
-        private static (int score, int col) Minimax(int[][] p1Board, int[][] p2Board, int currentDie, int depth, bool p1Turn)
+        private static (int score, int col) Minimax(int[][] p1Board, int[][] p2Board, int currentDie, int depth, bool p1Turn, bool useRandom)
         {
             List<int> availableCols = GetAvailableCols(p1Turn ? p1Board : p2Board);
 
@@ -34,8 +32,6 @@ namespace KnuckleBones
                 int[][] nextP1 = CloneBoard(p1Board);
                 int[][] nextP2 = CloneBoard(p2Board);
                 
-                // Simulate placing die in the FIRST available row of the column
-                // (Since we don't choose the row, just the column)
                 int row = GetFirstEmptyRow(p1Turn ? nextP1 : nextP2, col);
                 
                 if (p1Turn) 
@@ -51,25 +47,39 @@ namespace KnuckleBones
 
                 int scoreAfterMove;
                 
-                // If we have depth remaining, we should ideally look at all possible next dice (1-6)
-                // and take the average (Expectiminimax). 
                 if (depth > 1 && !Rules.IsBoardFull(nextP1) && !Rules.IsBoardFull(nextP2))
                 {
                     long averageScore = 0;
                     for (int nextDie = 1; nextDie <= 6; nextDie++)
                     {
-                        var (resScore, _) = Minimax(nextP1, nextP2, nextDie, depth - 1, !p1Turn);
+                        var (resScore, _) = Minimax(nextP1, nextP2, nextDie, depth - 1, !p1Turn, useRandom);
                         averageScore += resScore;
                     }
                     scoreAfterMove = (int)(averageScore / 6);
                 }
                 else
                 {
-                    // Leaf node or end of depth: evaluate board state
                     scoreAfterMove = Rules.CalculateScore(nextP2) - Rules.CalculateScore(nextP1);
                 }
+
+                if (depth <= 1)
+                {
+                    int p1DestructionCount = CountDifferences(p1Board, nextP1);
+                    int p2MatchCount = CountMatches(p2Board, nextP2, currentDie);
+                    
+                    if (!p1Turn)
+                    {
+                        scoreAfterMove += p1DestructionCount * 100;
+                        scoreAfterMove += p2MatchCount * 50;
+                    }
+                    else
+                    {
+                        scoreAfterMove -= p1DestructionCount * 100;
+                        scoreAfterMove -= p2MatchCount * 50;
+                    }
+                }
                 
-                if (!p1Turn) // AI maximizing (p2 - p1)
+                if (!p1Turn) // AI maximizing
                 {
                     if (scoreAfterMove > bestScore)
                     {
@@ -82,7 +92,7 @@ namespace KnuckleBones
                         tiedCols.Add(col);
                     }
                 }
-                else // Player minimizing (p2 - p1)
+                else // Player minimizing
                 {
                     if (scoreAfterMove < bestScore)
                     {
@@ -97,9 +107,7 @@ namespace KnuckleBones
                 }
             }
 
-            // Tie-break randomly to make the AI less predictable
-            Random rng = new Random();
-            int chosenCol = tiedCols[rng.Next(tiedCols.Count)];
+            int chosenCol = (useRandom) ? tiedCols[new Random().Next(tiedCols.Count)] : tiedCols[0];
             return (bestScore, chosenCol);
         }
 
@@ -121,6 +129,27 @@ namespace KnuckleBones
         private static int[][] CloneBoard(int[][] board)
         {
             return new int[][] { (int[])board[0].Clone(), (int[])board[1].Clone(), (int[])board[2].Clone() };
+        }
+
+        private static int CountDifferences(int[][] oldBoard, int[][] newBoard)
+        {
+            int diff = 0;
+            for (int c = 0; c < 3; c++)
+                for (int r = 0; r < 3; r++)
+                    if (oldBoard[c][r] != 0 && newBoard[c][r] == 0) diff++;
+            return diff;
+        }
+
+        private static int CountMatches(int[][] oldBoard, int[][] newBoard, int val)
+        {
+            int matches = 0;
+            for (int c = 0; c < 3; c++)
+            {
+                int oldCount = oldBoard[c].Count(x => x == val);
+                int newCount = newBoard[c].Count(x => x == val);
+                if (newCount > oldCount && oldCount > 0) matches += (newCount - oldCount);
+            }
+            return matches;
         }
     }
 }
