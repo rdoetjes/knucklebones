@@ -23,6 +23,24 @@ namespace KnuckleBones
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left))
                 {
                     Vector2 mousePos = Raylib.GetMousePosition();
+                    // Check Difficulty Buttons
+                    int startY = 620;
+                    int startX = 150;
+                    int btnWidth = 100;
+                    int btnHeight = 40;
+                    int spacing = 20;
+
+                    Difficulty[] diffs = { Difficulty.Easy, Difficulty.Medium, Difficulty.Hard };
+                    for (int i = 0; i < diffs.Length; i++)
+                    {
+                        Rectangle rect = new Rectangle(startX + i * (btnWidth + spacing), startY - 10, btnWidth, btnHeight);
+                        if (Raylib.CheckCollisionPointRec(mousePos, rect))
+                        {
+                            state.CurrentDifficulty = diffs[i];
+                            return;
+                        }
+                    }
+
                     int grid1StartX = 20;
                     int grid1StartY = 150; // Matching UI.cs DrawPlayerGrid
                     int cellSize = 80;

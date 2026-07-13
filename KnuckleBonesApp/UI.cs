@@ -9,7 +9,7 @@ namespace KnuckleBones
     public class UI
     {
         public const int ScreenWidth = 600;
-        public const int ScreenHeight = 600;
+        public const int ScreenHeight = 700;
         
         public static Font GameFont;
         public static Texture2D[] WhiteDice = new Texture2D[7];
@@ -89,6 +89,37 @@ namespace KnuckleBones
 
                 string turnText = state.Player1Turn ? "<< Your Turn" : "AI Thinking >>";
                 Raylib.DrawTextEx(GameFont, turnText, new System.Numerics.Vector2(ScreenWidth/2 - 60, 95), 20, 2, turnColor);
+            }
+
+            // Difficulty UI
+            DrawDifficultySelector(state);
+        }
+
+        private static void DrawDifficultySelector(GameState state)
+        {
+            int startY = 620;
+            Raylib.DrawLineEx(new Vector2(0, startY - 10), new Vector2(ScreenWidth, startY - 10), 1, Color.DarkGray);
+            Raylib.DrawTextEx(GameFont, "Difficulty:", new Vector2(20, startY), 20, 2, Color.LightGray);
+
+            Difficulty[] diffs = { Difficulty.Easy, Difficulty.Medium, Difficulty.Hard };
+            int btnWidth = 100;
+            int btnHeight = 40;
+            int spacing = 20;
+            int startX = 150;
+
+            for (int i = 0; i < diffs.Length; i++)
+            {
+                Difficulty d = diffs[i];
+                int x = startX + i * (btnWidth + spacing);
+                Rectangle rect = new Rectangle(x, startY - 10, btnWidth, btnHeight);
+                bool isSelected = state.CurrentDifficulty == d;
+
+                Raylib.DrawRectangleRec(rect, isSelected ? Color.SkyBlue : Color.DarkGray);
+                Raylib.DrawRectangleLinesEx(rect, 2, Color.White);
+                
+                string text = d.ToString();
+                Vector2 textSize = Raylib.MeasureTextEx(GameFont, text, 18, 2);
+                Raylib.DrawTextEx(GameFont, text, new Vector2(x + (btnWidth - textSize.X)/2, startY - 10 + (btnHeight - textSize.Y)/2), 18, 2, isSelected ? Color.Black : Color.White);
             }
         }
 
