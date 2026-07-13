@@ -5,7 +5,7 @@ all: run
 
 # Run the test suite
 tests:
-	dotnet test KnuckleBonesTests/KnuckleBonesTests.csproj
+	dotnet test --logger "console;verbosity=detailed" KnuckleBonesTests/KnuckleBonesTests.csproj
 
 # Run the application
 run:
