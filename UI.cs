@@ -15,7 +15,7 @@ namespace KnuckleBones
         public static Texture2D[] WhiteDice = new Texture2D[7];
         public static Texture2D[] BlackDice = new Texture2D[7];
         public static Texture2D Background;
-
+        
         private struct Star
         {
             public Vector3 Position;
@@ -82,9 +82,12 @@ namespace KnuckleBones
         public static void DrawBoard(GameState state)
         {
             DrawWarpStarfield();
-            Raylib.DrawLineEx(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 2, Color.Gray);
-            DrawPlayerGrid(state.Player1Board, 20, true);
-            DrawPlayerGrid(state.Player2Board, 320, false);
+
+            Color lightBlue = new Color(100, 200, 255, 255);
+            Raylib.DrawLineEx(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 2, lightBlue);
+            
+            DrawPlayerGrid(state.Player1Board, 20, true, lightBlue);
+            DrawPlayerGrid(state.Player2Board, 320, false, lightBlue);
 
             Raylib.DrawTextEx(GameFont, $"Player: {state.Player1Score}", new Vector2(20, 560), 24, 2, Color.White);
             Raylib.DrawTextEx(GameFont, $"AI: {state.Player2Score}", new Vector2(320, 560), 24, 2, Color.White);
@@ -118,47 +121,28 @@ namespace KnuckleBones
             {
                 starfield[i].Position.Z -= starfield[i].Speed * dt * 50;
                 if (starfield[i].Position.Z <= 10) ResetStar(ref starfield[i], false);
-
                 float z = starfield[i].Position.Z;
                 float x = (starfield[i].Position.X / z) * 400 + ScreenWidth / 2;
                 float y = (starfield[i].Position.Y / z) * 400 + ScreenHeight / 2;
-
-                if (x < -100 || x > ScreenWidth + 100 || y < -100 || y > ScreenHeight + 100)
-                {
-                    if (z < 500) { ResetStar(ref starfield[i], false); continue; }
-                }
-
+                if (x < -100 || x > ScreenWidth + 100 || y < -100 || y > ScreenHeight + 100) { if (z < 500) { ResetStar(ref starfield[i], false); continue; } }
                 float prevZ = z + starfield[i].Speed * 0.8f;
                 float px = (starfield[i].Position.X / prevZ) * 400 + ScreenWidth / 2;
                 float py = (starfield[i].Position.Y / prevZ) * 400 + ScreenHeight / 2;
-
-                // Determine color based on screen position (Chromatic Aberration at edges)
-                float edgeThreshold = 0.2f; // Start aberration at 20% from edges
+                float edgeThreshold = 0.2f;
                 float distFromCenterNormX = Math.Abs(x - ScreenWidth / 2) / (ScreenWidth / 2);
                 float distFromCenterNormY = Math.Abs(y - ScreenHeight / 2) / (ScreenHeight / 2);
                 float maxDist = Math.Max(distFromCenterNormX, distFromCenterNormY);
-
                 Color starColor = Color.White;
                 byte alpha = (byte)Math.Clamp(255 - (z / 2000 * 255), 0, 255);
                 starColor.A = alpha;
-
-                if (maxDist > 1.0f - edgeThreshold)
-                {
-                    // Calculate aberration intensity
-                    float intensity = (maxDist - (1.0f - edgeThreshold)) / edgeThreshold;
-                    intensity = Math.Clamp(intensity, 0, 1);
-
-                    // Draw chromatic aberration streaks (Red and Blue shifted)
-                    Color redShift = Color.Red;
-                    redShift.A = (byte)(alpha * intensity * 0.6f);
-                    Color blueShift = Color.Blue;
-                    blueShift.A = (byte)(alpha * intensity * 0.6f);
-
+                if (maxDist > 1.0f - edgeThreshold) {
+                    float intensity = Math.Clamp((maxDist - (1.0f - edgeThreshold)) / edgeThreshold, 0, 1);
+                    Color redShift = Color.Red; redShift.A = (byte)(alpha * intensity * 0.6f);
+                    Color blueShift = Color.Blue; blueShift.A = (byte)(alpha * intensity * 0.6f);
                     float shiftAmount = intensity * 4.0f;
                     Raylib.DrawLineEx(new Vector2(px - shiftAmount, py), new Vector2(x - shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), redShift);
                     Raylib.DrawLineEx(new Vector2(px + shiftAmount, py), new Vector2(x + shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), blueShift);
                 }
-
                 Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), starColor);
             }
             Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 160));
@@ -196,23 +180,20 @@ namespace KnuckleBones
             }
         }
 
-        private static void DrawPlayerGrid(int[][] grid, int startX, bool isWhite)
+        private static void DrawPlayerGrid(int[][] grid, int startX, bool isWhite, Color lineColor)
         {
             for (int col = 0; col < 3; col++)
-            {
                 for (int row = 0; row < 3; row++)
                 {
                     int x = startX + col * 90;
                     int y = 150 + row * 90;
-                    Raylib.DrawRectangleLines(x, y, 80, 80, Color.DarkGray);
-                    if (grid[col][row] > 0)
-                    {
+                    Raylib.DrawRectangleRoundedLinesEx(new Rectangle(x, y, 80, 80), 0.2f, 12, 2, lineColor);
+                    if (grid[col][row] > 0) {
                         Texture2D tex = isWhite ? WhiteDice[grid[col][row]] : BlackDice[grid[col][row]];
                         float scale = 80f / tex.Width * 0.8f;
                         Raylib.DrawTextureEx(tex, new Vector2(x + (80 - tex.Width * scale) / 2, y + (80 - tex.Height * scale) / 2), 0, scale, Color.White);
                     }
                 }
-            }
         }
     }
 }
