@@ -8,10 +8,10 @@ namespace KnuckleBones
     {
         public static int GetMove(GameState state)
         {
-            // Simple AI: Prefer columns where it can destroy opponent dice, 
+            // Simple AI: Prefer columns where it can destroy opponent dice,
             // then columns where it has a match, else random available column.
-            
-            List<int> availableCols = new List<int>();
+
+            List<int> availableCols = [];
             for (int c = 0; c < 3; c++)
             {
                 if (state.Player2Board[c].Any(x => x == 0))

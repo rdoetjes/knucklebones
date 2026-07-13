@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KnuckleBonesApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+16f563b5955140af46092d523a9d975a3fd0d952")]
 [assembly: System.Reflection.AssemblyProductAttribute("KnuckleBonesApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KnuckleBonesApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

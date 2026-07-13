@@ -122,6 +122,8 @@ namespace KnuckleBones
         }
     }
 
+    public enum Difficulty { Easy = 1, Medium = 3, Hard = 5 }
+
     public class GameState
     {
         public int[][] Player1Board = new int[3][] { new int[3], new int[3], new int[3] };
@@ -131,6 +133,7 @@ namespace KnuckleBones
         public int CurrentDie;
         public bool Player1Turn = true;
         public bool GameOver = false;
+        public Difficulty CurrentDifficulty = Difficulty.Medium;
 
         public GameState()
         {
@@ -164,9 +167,9 @@ namespace KnuckleBones
             {
                 myBoard[col][actualRow] = CurrentDie;
                 
-                // Rule: "Placing a die in a column directly opposite an opponent's die 
-                // destroys all dice of that same value in the opponent's corresponding column."
-                Rules.HandleDestruction(col, CurrentDie, opponentBoard);
+                // Rule: "Whenever the player places a die in a row and the opponent has 
+                // that same number in that same row, the opponent's die with that same number need to be removed"
+                Rules.HandleDestruction(actualRow, CurrentDie, opponentBoard);
 
                 AdvanceTurn();
                 return true;
