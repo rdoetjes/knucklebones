@@ -7,6 +7,8 @@ namespace KnuckleBones
     {
         private static float aiTimer = 0;
 
+        private static bool isThinking = false;
+
         public static void Update(GameState state)
         {
             if (state.GameOver)
@@ -60,17 +62,25 @@ namespace KnuckleBones
                     }
                 }
             }
-            else // AI Turn
+            else if (!isThinking) // AI Turn
             {
                 aiTimer += Raylib.GetFrameTime();
-                if (aiTimer > 1.0f) // Delay AI for better UX
+                if (aiTimer > 0.5f) // Reduced delay since thinking itself takes time
                 {
-                    int move = AI.GetMove(state);
-                    if (move != -1)
+                    isThinking = true;
+                    System.Threading.Tasks.Task.Run(() =>
                     {
-                        state.PlaceDie(move);
-                    }
-                    aiTimer = 0;
+                        int move = AI.GetMove(state);
+                        // We need to sync back to main thread to modify state, 
+                        // but PlaceDie is simple enough to call if we're careful.
+                        // Raylib isn't thread safe, but GameState is just logic.
+                        if (move != -1)
+                        {
+                            state.PlaceDie(move);
+                        }
+                        isThinking = false;
+                        aiTimer = 0;
+                    });
                 }
             }
         }

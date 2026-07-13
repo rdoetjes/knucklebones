@@ -25,28 +25,28 @@ namespace KnuckleBones
             }
 
             int bestScore = p1Turn ? int.MaxValue : int.MinValue;
-            List<int> tiedCols = new List<int>();
+            List<int> tiedCols = [];
 
             foreach (int col in availableCols)
             {
                 int[][] nextP1 = CloneBoard(p1Board);
                 int[][] nextP2 = CloneBoard(p2Board);
-                
+
                 int row = GetFirstEmptyRow(p1Turn ? nextP1 : nextP2, col);
-                
-                if (p1Turn) 
+
+                if (p1Turn)
                 {
                     nextP1[col][row] = currentDie;
                     Rules.HandleDestruction(row, currentDie, nextP2);
                 }
-                else 
+                else
                 {
                     nextP2[col][row] = currentDie;
                     Rules.HandleDestruction(row, currentDie, nextP1);
                 }
 
                 int scoreAfterMove;
-                
+
                 if (depth > 1 && !Rules.IsBoardFull(nextP1) && !Rules.IsBoardFull(nextP2))
                 {
                     long averageScore = 0;
@@ -66,7 +66,7 @@ namespace KnuckleBones
                 {
                     int p1DestructionCount = CountDifferences(p1Board, nextP1);
                     int p2MatchCount = CountMatches(p2Board, nextP2, currentDie);
-                    
+
                     if (!p1Turn)
                     {
                         scoreAfterMove += p1DestructionCount * 100;
@@ -78,7 +78,7 @@ namespace KnuckleBones
                         scoreAfterMove -= p2MatchCount * 50;
                     }
                 }
-                
+
                 if (!p1Turn) // AI maximizing
                 {
                     if (scoreAfterMove > bestScore)
@@ -113,7 +113,7 @@ namespace KnuckleBones
 
         private static List<int> GetAvailableCols(int[][] board)
         {
-            List<int> cols = new List<int>();
+            List<int> cols = [];
             for (int i = 0; i < 3; i++)
                 if (board[i].Any(x => x == 0)) cols.Add(i);
             return cols;

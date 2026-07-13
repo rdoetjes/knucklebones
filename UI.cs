@@ -15,6 +15,8 @@ namespace KnuckleBones
         public static Texture2D[] WhiteDice = new Texture2D[7];
         public static Texture2D[] BlackDice = new Texture2D[7];
         public static Texture2D Background;
+        private static RenderTexture2D plasmaTarget;
+        private static float plasmaTime = 0;
 
         public static void LoadResources()
         {
@@ -61,6 +63,9 @@ namespace KnuckleBones
                 WhiteDice[i] = Raylib.LoadTexture(whitePath);
                 BlackDice[i] = Raylib.LoadTexture(blackPath);
             }
+
+            // Initialize plasma effect texture
+            plasmaTarget = Raylib.LoadRenderTexture(ScreenWidth, ScreenHeight);
         }
 
         public static void UnloadResources()
@@ -71,11 +76,12 @@ namespace KnuckleBones
                 Raylib.UnloadTexture(WhiteDice[i]);
                 Raylib.UnloadTexture(BlackDice[i]);
             }
+            Raylib.UnloadRenderTexture(plasmaTarget);
         }
 
         public static void DrawBoard(GameState state)
         {
-            Raylib.ClearBackground(new Color(40, 44, 52, 255)); // Dark theme
+            DrawPlasmaBackground();
 
             // Vertical Divider Line
             Raylib.DrawLineEx(new System.Numerics.Vector2(ScreenWidth / 2, 0),
@@ -124,6 +130,65 @@ namespace KnuckleBones
 
             // Difficulty UI
             DrawDifficultySelector(state);
+        }
+
+        private static void DrawPlasmaBackground()
+        {
+            plasmaTime += Raylib.GetFrameTime() * 1.5f; // Faster for more intensity
+
+            Raylib.BeginTextureMode(plasmaTarget);
+            // Don't clear to pure black, allow some trails/accumulation
+            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 20));
+
+            // Old school additive-style blending using many overlapping circles
+            // We use many more circles with varying properties for a complex look
+            for (int i = 0; i < 12; i++)
+            {
+                float t = plasmaTime + i * 0.8f;
+
+                // Complex paths for the "blobs"
+                float x = (float)(Math.Sin(t * 0.7f) * Math.Cos(t * 0.3f) * ScreenWidth * 0.4f + ScreenWidth * 0.5f);
+                float y = (float)(Math.Cos(t * 0.5f) * Math.Sin(t * 0.4f) * ScreenHeight * 0.4f + ScreenHeight * 0.5f);
+
+                // Pulsating radius
+                float radius = (float)(Math.Sin(t * 0.9f) * 80 + 150);
+
+                // Intense, cycling colors
+                float hue = (i * 30 + plasmaTime * 100) % 360;
+                Color c = ColorFromHSV(hue, 1.0f, 1.0f);
+                c.A = 120; // Transparency for layering/blending
+
+                Raylib.DrawCircleV(new Vector2(x, y), radius, c);
+            }
+            Raylib.EndTextureMode();
+
+            // Draw the generated texture with additive blending style (simulated)
+            Raylib.DrawTextureRec(plasmaTarget.Texture,
+                new Rectangle(0, 0, plasmaTarget.Texture.Width, -plasmaTarget.Texture.Height),
+                Vector2.Zero, Color.White);
+
+            // Add a vibrant color grading overlay instead of just dark gray
+            // This creates the "psychedelic" blend look
+            Color grading = ColorFromHSV((plasmaTime * 20) % 360, 0.4f, 0.2f);
+            grading.A = 150;
+            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, grading);
+        }
+
+        private static Color ColorFromHSV(float hue, float saturation, float value)
+        {
+            float c = value * saturation;
+            float x = c * (1 - Math.Abs((hue / 60) % 2 - 1));
+            float m = value - c;
+            float r = 0, g = 0, b = 0;
+
+            if (hue < 60) { r = c; g = x; }
+            else if (hue < 120) { r = x; g = c; }
+            else if (hue < 180) { g = c; b = x; }
+            else if (hue < 240) { g = x; b = c; }
+            else if (hue < 300) { r = x; b = c; }
+            else { r = c; b = x; }
+
+            return new Color((byte)((r + m) * 255), (byte)((g + m) * 255), (byte)((b + m) * 255), (byte)255);
         }
 
         private static void DrawDifficultySelector(GameState state)
