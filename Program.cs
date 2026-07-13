@@ -7,7 +7,7 @@ namespace KnuckleBones
         static void Main(string[] args)
         {
             Raylib.InitWindow(UI.ScreenWidth, UI.ScreenHeight, "Knuckle Bones");
-            Raylib.SetTargetFPS(60);
+            Raylib.SetTargetFPS(30);
 
             UI.LoadResources();
             GameState state = new GameState();

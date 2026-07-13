@@ -119,7 +119,7 @@ namespace KnuckleBones
                 Raylib.DrawTextureEx(rollTex, rollPos, 0, rollScale, Color.White);
 
                 string turnText = state.Player1Turn ? "<< Your Turn" : "AI Thinking >>";
-                Raylib.DrawTextEx(GameFont, turnText, new System.Numerics.Vector2(ScreenWidth/2 - 60, 95), 20, 2, turnColor);
+                Raylib.DrawTextEx(GameFont, turnText, new System.Numerics.Vector2(ScreenWidth/2 - 60, 125), 20, 2, turnColor);
             }
 
             // Difficulty UI
