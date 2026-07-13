@@ -5,11 +5,11 @@ all: run
 
 # Run the test suite
 tests:
-	dotnet test knucklebones/KnuckleBonesTests/KnuckleBonesTests.csproj
+	dotnet test KnuckleBonesTests/KnuckleBonesTests.csproj
 
 # Run the application
 run:
-	dotnet run --project knucklebones/KnuckleBonesApp/KnuckleBonesApp.csproj
+	dotnet run --project KnuckleBonesApp.csproj
 
 # Generate SBOM and scan for vulnerabilities
 # Requires syft and grype to be installed

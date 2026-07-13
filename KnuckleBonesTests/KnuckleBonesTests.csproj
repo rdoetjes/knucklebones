@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\KnuckleBonesApp\KnuckleBonesApp.csproj" />
+    <ProjectReference Include="..\KnuckleBonesApp.csproj" />
   </ItemGroup>
 
 </Project>
