@@ -57,25 +57,26 @@ namespace KnuckleBones
                     }
                     scoreAfterMove = (int)(averageScore / 6);
                 }
+                // Leaf node or end of depth: evaluate board state
                 else
                 {
-                    scoreAfterMove = Rules.CalculateScore(nextP2) - Rules.CalculateScore(nextP1);
+                    scoreAfterMove = EvaluateBoard(nextP1, nextP2);
                 }
 
                 if (depth <= 1)
                 {
                     int p1DestructionCount = CountDifferences(p1Board, nextP1);
                     int p2MatchCount = CountMatches(p2Board, nextP2, currentDie);
-
+                    
                     if (!p1Turn)
                     {
-                        scoreAfterMove += p1DestructionCount * 100;
-                        scoreAfterMove += p2MatchCount * 50;
+                        scoreAfterMove += p1DestructionCount * 150; // Increased weight
+                        scoreAfterMove += p2MatchCount * 80;       // Increased weight
                     }
                     else
                     {
-                        scoreAfterMove -= p1DestructionCount * 100;
-                        scoreAfterMove -= p2MatchCount * 50;
+                        scoreAfterMove -= p1DestructionCount * 150;
+                        scoreAfterMove -= p2MatchCount * 80;
                     }
                 }
 
@@ -109,6 +110,18 @@ namespace KnuckleBones
 
             int chosenCol = (useRandom) ? tiedCols[new Random().Next(tiedCols.Count)] : tiedCols[0];
             return (bestScore, chosenCol);
+        }
+
+        private static int EvaluateBoard(int[][] p1Board, int[][] p2Board)
+        {
+            int scoreDiff = Rules.CalculateScore(p2Board) - Rules.CalculateScore(p1Board);
+            
+            // Heuristic: Prefer keeping columns open for future high rolls
+            // and penalize boards that are close to filling up with low scores
+            int p1Empty = p1Board.Sum(col => col.Count(x => x == 0));
+            int p2Empty = p2Board.Sum(col => col.Count(x => x == 0));
+            
+            return scoreDiff + (p2Empty * 10) - (p1Empty * 10);
         }
 
         private static List<int> GetAvailableCols(int[][] board)
