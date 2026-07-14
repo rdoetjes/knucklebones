@@ -15,16 +15,9 @@ namespace DiceyStarCluster
         private readonly static Texture2D[] WhiteDice = new Texture2D[7];
         private readonly static Texture2D[] BlackDice = new Texture2D[7];
         private static Texture2D BgImg;
-
-        private struct Star
-        {
-            public Vector3 Position;
-            public float Speed;
-            public Color StarColor;
-        }
-
-        private const int StarCount = 2000;
-        private readonly static Star[] starfield = new Star[StarCount];
+        private static Shader StarShader;
+        private static int TimeLoc;
+        private static int ResLoc;
 
         public static void LoadResources()
         {
@@ -53,20 +46,14 @@ namespace DiceyStarCluster
 
             BgImg = Raylib.LoadTexture(Path.Combine(resourcesPath, "img", "bg.png"));
 
-            for (int i = 0; i < StarCount; i++)
-                ResetStar(ref starfield[i], true);
-        }
-
-        private static void ResetStar(ref Star star, bool randomZ)
-        {
-            Random rng = new Random();
-            star.Position = new Vector3(
-                (float)(rng.NextDouble() * 1000 - 500),
-                (float)(rng.NextDouble() * 1000 - 500),
-                randomZ ? (float)(rng.NextDouble() * 2000 + 10) : 2000
-            );
-            star.Speed = (float)(rng.NextDouble() * 2.0f + 1.0f);
-            star.StarColor = Color.White; // Changed from randomized HSV colors to pure white
+            // Load Star Shader
+            string shaderPath = Path.Combine(resourcesPath, "shaders", "starfield.fs");
+            StarShader = Raylib.LoadShader(null, shaderPath);
+            TimeLoc = Raylib.GetShaderLocation(StarShader, "time");
+            ResLoc = Raylib.GetShaderLocation(StarShader, "resolution");
+            
+            float[] res = { (float)ScreenWidth, (float)ScreenHeight };
+            Raylib.SetShaderValue(StarShader, ResLoc, res, ShaderUniformDataType.Vec2);
         }
 
         public static void UnloadResources()
@@ -78,40 +65,67 @@ namespace DiceyStarCluster
                 Raylib.UnloadTexture(BlackDice[i]);
             }
             Raylib.UnloadTexture(BgImg);
+            Raylib.UnloadShader(StarShader);
         }
 
         public static void DrawBoard(GameState state)
         {
             Raylib.ClearBackground(Color.Black);
 
-            // draw background
+            // Update shader time
+            float time = (float)Raylib.GetTime();
+            Raylib.SetShaderValue(StarShader, TimeLoc, time, ShaderUniformDataType.Float);
+
+            // draw background image
             Raylib.DrawTextureEx(BgImg, new Vector2(-400,-200), 0.0f, 2.0f, Color.White);
 
-            DrawWarpStarfield();
+            // Draw shader starfield over the image with additive blend
+            Raylib.BeginBlendMode(BlendMode.Additive);
+            Raylib.BeginShaderMode(StarShader);
+            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color.White);
+            Raylib.EndShaderMode();
+            Raylib.EndBlendMode();
 
-            // Draw Gradient Vertical Divider (9 pixels wide for symmetry)
+            // Subtle dark overlay
+            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 60));
+
+            DrawLayout(state);
+            DrawGameState(state);
+            DrawDifficultySelector(state);
+        }
+
+        private static void DrawLayout(GameState state)
+        {
             DrawGradientLine(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 9);
 
-            int totalGridWidth = 3 * 100 - 20; // 3 cells (80) + 2 spacings (20)
+            int totalGridWidth = 3 * 100 - 20;
             int p1StartX = (ScreenWidth / 2 - totalGridWidth) / 2;
             int p2StartX = ScreenWidth / 2 + (ScreenWidth / 2 - totalGridWidth) / 2;
 
             DrawPlayerGrid(state, state.Player1Board, p1StartX, true, Color.White, true);
             DrawPlayerGrid(state, state.Player2Board, p2StartX, false, Color.White, false);
 
-            int player1Rows = Rules.CalculateRowsScore(state.Player1Board);
-            int player1Cols = Rules.CalculateColsScore(state.Player1Board);
-            int player2Rows = Rules.CalculateRowsScore(state.Player2Board);
-            int player2Cols = Rules.CalculateColsScore(state.Player2Board);
+            DrawScores(state, p1StartX, p2StartX);
+        }
+
+        private static void DrawScores(GameState state, int p1StartX, int p2StartX)
+        {
+            int p1Rows = Rules.CalculateRowsScore(state.Player1Board);
+            int p1Cols = Rules.CalculateColsScore(state.Player1Board);
+            int p2Rows = Rules.CalculateRowsScore(state.Player2Board);
+            int p2Cols = Rules.CalculateColsScore(state.Player2Board);
 
             Raylib.DrawTextEx(GameFont, $"Player: {state.Player1Score}", new Vector2(p1StartX, 560), 24, 2, Color.White);
-            string p1Breakdown = player1Rows >= player1Cols ? $"(Row Score: {player1Rows})" : $"(Col Score: {player1Cols})";
+            string p1Breakdown = p1Rows >= p1Cols ? $"(Row Score: {p1Rows})" : $"(Col Score: {p1Cols})";
             Raylib.DrawTextEx(GameFont, p1Breakdown, new Vector2(p1StartX, 590), 16, 2, Color.Gray);
 
             Raylib.DrawTextEx(GameFont, $"AI: {state.Player2Score}", new Vector2(p2StartX, 560), 24, 2, Color.White);
-            string p2Breakdown = player2Rows >= player2Cols ? $"(Row Score: {player2Rows})" : $"(Col Score: {player2Cols})";
+            string p2Breakdown = p2Rows >= p2Cols ? $"(Row Score: {p2Rows})" : $"(Col Score: {p2Cols})";
             Raylib.DrawTextEx(GameFont, p2Breakdown, new Vector2(p2StartX, 590), 16, 2, Color.Gray);
+        }
 
+        private static void DrawGameState(GameState state)
+        {
             if (state.GameOver)
             {
                 string winner = state.Player1Score > state.Player2Score ? "Player Wins!" : (state.Player1Score == state.Player2Score ? "Draw!" : "AI Wins!");
@@ -126,43 +140,6 @@ namespace DiceyStarCluster
             {
                 DrawCurrentRoll(state);
             }
-            DrawDifficultySelector(state);
-        }
-
-        private static void DrawWarpStarfield()
-        {
-            float dt = Raylib.GetFrameTime();
-            for (int i = 0; i < StarCount; i++)
-            {
-                starfield[i].Position.Z -= starfield[i].Speed * dt * 50;
-                if (starfield[i].Position.Z <= 10) ResetStar(ref starfield[i], false);
-                float z = starfield[i].Position.Z;
-                float x = (starfield[i].Position.X / z) * 400 + ScreenWidth / 2;
-                float y = (starfield[i].Position.Y / z) * 400 + ScreenHeight / 2;
-                if (x < -100 || x > ScreenWidth + 100 || y < -100 || y > ScreenHeight + 100) { if (z < 500) { ResetStar(ref starfield[i], false); continue; } }
-                float prevZ = z + starfield[i].Speed * 0.8f;
-                float px = (starfield[i].Position.X / prevZ) * 400 + ScreenWidth / 2;
-                float py = (starfield[i].Position.Y / prevZ) * 400 + ScreenHeight / 2;
-                float edgeThreshold = 0.2f;
-                float distFromCenterNormX = Math.Abs(x - ScreenWidth / 2) / (ScreenWidth / 2);
-                float distFromCenterNormY = Math.Abs(y - ScreenHeight / 2) / (ScreenHeight / 2);
-                float maxDist = Math.Max(distFromCenterNormX, distFromCenterNormY);
-                Color starColor = Color.White;
-                byte alpha = (byte)Math.Clamp(255 - (z / 2000 * 200), 40, 255); // More transparent distant stars
-                starColor.A = alpha;
-                if (maxDist > 1.0f - edgeThreshold) {
-                    float intensity = Math.Clamp((maxDist - (1.0f - edgeThreshold)) / edgeThreshold, 0, 1);
-                    Color redShift = Color.Red; redShift.A = (byte)(alpha * intensity * 0.8f);
-                    Color blueShift = Color.Blue; blueShift.A = (byte)(alpha * intensity * 0.8f);
-                    float shiftAmount = intensity * 4.0f;
-                    Raylib.DrawLineEx(new Vector2(px - shiftAmount, py), new Vector2(x - shiftAmount, y), Math.Clamp(2.5f / (z / 500), 1.0f, 4.0f), redShift);
-                    Raylib.DrawLineEx(new Vector2(px + shiftAmount, py), new Vector2(x + shiftAmount, y), Math.Clamp(2.5f / (z / 500), 1.0f, 4.0f), blueShift);
-                }
-                Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(3.0f / (z / 500), 1.5f, 6.0f), starColor); // Increased thickness
-            }
-
-            // Subtle dark overlay to help the UI stand out
-            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 60));
         }
 
         private static void DrawPlayerGrid(GameState state, int[][] grid, int startX, bool isWhite, Color baseColor, bool isPlayer1)
@@ -190,10 +167,6 @@ namespace DiceyStarCluster
             Vector2 mousePos = Raylib.GetMousePosition();
             int gridWidth = 3 * spacing - 20;
             int gridHeight = 3 * spacing - 20;
-
-            // We only care about hover for Player 1's interactions/previews
-            // but the function needs to know which grid it's checking.
-            // For simplicity in the refactored version, we check if the mouse is in the bounds provided.
             if (mousePos.X >= gridStartX && mousePos.X <= gridStartX + gridWidth &&
                 mousePos.Y >= 150 && mousePos.Y <= 150 + gridHeight)
             {
@@ -208,7 +181,6 @@ namespace DiceyStarCluster
             int y = 150 + row * spacing;
             Rectangle rect = new Rectangle(x, y, 80, 80);
 
-            // 1. Destruction Preview
             if (!isPlayer1 && hoveredCol != -1 && state.Player1Turn && !state.GameOver)
             {
                 Vector2 mousePos = Raylib.GetMousePosition();
@@ -222,10 +194,8 @@ namespace DiceyStarCluster
                 }
             }
 
-            // 2. Cell Background
             DrawGradientRoundedRect(rect, 0.2f, 9);
 
-            // 3. AI Last Move Highlight
             if (!isPlayer1 && state.AILastMove.HasValue)
             {
                 var lastMove = state.AILastMove.Value;
@@ -242,7 +212,6 @@ namespace DiceyStarCluster
                 }
             }
 
-            // 4. Dice Texture
             if (grid[col][row] > 0)
             {
                 Texture2D tex = isWhite ? WhiteDice[grid[col][row]] : BlackDice[grid[col][row]];
@@ -258,7 +227,6 @@ namespace DiceyStarCluster
             string text = colScore.ToString();
             Vector2 size = Raylib.MeasureTextEx(GameFont, text, 18, 2);
             Color color = GetComboColor(colValues);
-
             Raylib.DrawTextEx(GameFont, text, new Vector2(startX + col * spacing + (80 - size.X) / 2, 150 + 3 * spacing + 5), 18, 2, color);
         }
 
@@ -269,7 +237,6 @@ namespace DiceyStarCluster
             string text = rowScore.ToString();
             Vector2 size = Raylib.MeasureTextEx(GameFont, text, 18, 2);
             Color color = GetComboColor(rowValues);
-
             float y = 150 + row * spacing + (80 - size.Y) / 2;
             if (isPlayer1)
                 Raylib.DrawTextEx(GameFont, text, new Vector2(startX - size.X - 15, y), 18, 2, color);
@@ -299,24 +266,18 @@ namespace DiceyStarCluster
         {
             Raylib.DrawTextEx(GameFont, "Current Roll:", new Vector2(ScreenWidth / 2 - 55, 10), 20, 2, Color.SkyBlue);
             Texture2D rollTex = state.Player1Turn ? WhiteDice[state.CurrentDie] : BlackDice[state.CurrentDie];
-
-            // Animation for current die roll: zoom in and overshoot
             float elapsed = (float)Raylib.GetTime() - state.CurrentDieRoll.StartTime;
-            float duration = 0.45f;
+            float duration = 0.25f;
             float scale = 0.5f;
-
             if (elapsed < duration)
             {
-                // Ease Out Back: t: current time, b: beginning value, c: change in value, d: duration, s: overshoot amount
                 float t = elapsed / duration;
                 float s = 1.70158f;
                 float backFactor = (t - 1) * (t - 1) * ((s + 1) * (t - 1) + s) + 1;
                 scale = backFactor * 0.5f;
             }
-
             Vector2 pos = new Vector2(ScreenWidth / 2 - (rollTex.Width * scale) / 2, 35 + (rollTex.Height * 0.5f - rollTex.Height * scale) / 2);
             Raylib.DrawTextureEx(rollTex, pos, 0, scale, Color.White);
-
             string turnText = state.Player1Turn ? "<< Your Turn" : "AI Thinking >>";
             Raylib.DrawTextEx(GameFont, turnText, new Vector2(ScreenWidth / 2 - 60, 125), 20, 2, state.Player1Turn ? Color.White : Color.Gray);
         }
@@ -342,17 +303,16 @@ namespace DiceyStarCluster
         private static void DrawGradientLine(Vector2 start, Vector2 end, float totalWidth)
         {
             Color[] gradientColors = new Color[] {
-                new Color(0, 40, 120, 255),    // 1: Dark Blue (Outer)
-                new Color(0, 80, 200, 255),    // 2: Mid Blue
-                new Color(100, 200, 255, 255), // 3: Light Blue
-                new Color(200, 240, 255, 255), // 4: Very Light Blue
-                new Color(255, 255, 255, 255), // 5: Pure White (Center)
-                new Color(200, 240, 255, 255), // 6: Very Light Blue
-                new Color(100, 200, 255, 255), // 7: Light Blue
-                new Color(0, 80, 200, 255),    // 8: Mid Blue
-                new Color(0, 40, 120, 255)     // 9: Dark Blue (Inner)
+                new Color(0, 40, 120, 255),
+                new Color(0, 80, 200, 255),
+                new Color(100, 200, 255, 255),
+                new Color(200, 240, 255, 255),
+                new Color(255, 255, 255, 255),
+                new Color(200, 240, 255, 255),
+                new Color(100, 200, 255, 255),
+                new Color(0, 80, 200, 255),
+                new Color(0, 40, 120, 255)
             };
-
             float stepWidth = totalWidth / 9.0f;
             for (int i = 0; i < 9; i++)
             {
@@ -364,17 +324,16 @@ namespace DiceyStarCluster
         private static void DrawGradientRoundedRect(Rectangle rect, float roundness, float totalWidth)
         {
             Color[] gradientColors = new Color[] {
-                new Color(0, 40, 120, 255),    // 1: Dark Blue (Outer)
-                new Color(0, 80, 200, 255),    // 2: Mid Blue
-                new Color(100, 200, 255, 255), // 3: Light Blue
-                new Color(200, 240, 255, 255), // 4: Very Light Blue
-                new Color(255, 255, 255, 255), // 5: Pure White (Center)
-                new Color(200, 240, 255, 255), // 6: Very Light Blue
-                new Color(100, 200, 255, 255), // 7: Light Blue
-                new Color(0, 80, 200, 255),    // 8: Mid Blue
-                new Color(0, 40, 120, 255)     // 9: Dark Blue (Inner)
+                new Color(0, 40, 120, 255),
+                new Color(0, 80, 200, 255),
+                new Color(100, 200, 255, 255),
+                new Color(200, 240, 255, 255),
+                new Color(255, 255, 255, 255),
+                new Color(200, 240, 255, 255),
+                new Color(100, 200, 255, 255),
+                new Color(0, 80, 200, 255),
+                new Color(0, 40, 120, 255)
             };
-
             float stepWidth = totalWidth / 9.0f;
             for (int i = 0; i < 9; i++)
             {
