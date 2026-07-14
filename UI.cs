@@ -76,15 +76,11 @@ namespace DiceyStarCluster
             float time = (float)Raylib.GetTime();
             Raylib.SetShaderValue(StarShader, TimeLoc, time, ShaderUniformDataType.Float);
 
-            // draw background image
-            Raylib.DrawTextureEx(BgImg, new Vector2(-400,-200), 0.0f, 2.0f, Color.White);
-
-            // Draw shader starfield over the image with additive blend
-            Raylib.BeginBlendMode(BlendMode.Additive);
+            // Draw shader starfield integrated with BgImg
             Raylib.BeginShaderMode(StarShader);
-            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, Color.White);
+            // Draw BgImg inside ShaderMode so shader can sample it and add stars to it
+            Raylib.DrawTextureEx(BgImg, new Vector2(-400, -200), 0.0f, 2.0f, Color.White);
             Raylib.EndShaderMode();
-            Raylib.EndBlendMode();
 
             // Subtle dark overlay
             Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 60));
