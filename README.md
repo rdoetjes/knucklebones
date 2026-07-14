@@ -30,7 +30,7 @@ When you place a die, it acts as an attack in both directions:
 ## Controls
 - **Mouse Left Click**: Select a slot to place your die.
 - **Difficulty Buttons**: Select Easy (5s), Medium (6s), or Hard (8s) thinking time for the AI.
-- **R Key**: Restart the game after a Game Over.
+- **R Key**: Restart the game after a Game Over.,
 
 ## Strategic Tips
 - Use the **Destruction Preview** (red highlight) to see which opponent dice will be removed before you click.
