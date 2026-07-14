@@ -14,20 +14,20 @@ namespace DiceyStarCluster
             // Ensure a healthy minimum for CI runners (3 seconds minimum)
             int timeoutMs = Math.Max(timeLimitSeconds * 1000, 3000);
             var cts = new CancellationTokenSource(timeoutMs);
-            
+
             int bestCol = -1;
             int currentDepth = 1;
             // Difficulty.Easy now = 2, so we limit search depth to keep it "Easy"
             // but enough for our tests to pass.
             int maxDepth = (state.CurrentDifficulty == Difficulty.Easy) ? 2 : 10;
-            
+
             try {
                 // Iterative Deepening
                 while (!cts.IsCancellationRequested && currentDepth <= maxDepth)
                 {
                     // Use a sub-timer check inside Minimax as well via the token
                     var (score, col) = Minimax(state.Player1Board, state.Player2Board, state.CurrentDie, currentDepth, false, useRandom, cts.Token);
-                    
+
                     if (!cts.IsCancellationRequested && col != -1)
                     {
                         bestCol = col;
@@ -163,37 +163,9 @@ namespace DiceyStarCluster
             return cols;
         }
 
-        private static int GetFirstEmptyRow(int[][] board, int col)
-        {
-            for (int i = 0; i < 3; i++)
-                if (board[col][i] == 0) return i;
-            return -1;
-        }
-
         private static int[][] CloneBoard(int[][] board)
         {
             return new int[][] { (int[])board[0].Clone(), (int[])board[1].Clone(), (int[])board[2].Clone() };
-        }
-
-        private static int CountDifferences(int[][] oldBoard, int[][] newBoard)
-        {
-            int diff = 0;
-            for (int c = 0; c < 3; c++)
-                for (int r = 0; r < 3; r++)
-                    if (oldBoard[c][r] != 0 && newBoard[c][r] == 0) diff++;
-            return diff;
-        }
-
-        private static int CountMatches(int[][] oldBoard, int[][] newBoard, int val)
-        {
-            int matches = 0;
-            for (int c = 0; c < 3; c++)
-            {
-                int oldCount = oldBoard[c].Count(x => x == val);
-                int newCount = newBoard[c].Count(x => x == val);
-                if (newCount > oldCount && oldCount > 0) matches += (newCount - oldCount);
-            }
-            return matches;
         }
     }
 }

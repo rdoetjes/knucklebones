@@ -4,7 +4,7 @@ namespace DiceyStarCluster
 {
     public static class Rules
     {
-        const int ALL_DIFFERNT_SCORE = 10;
+        const int ALL_DIFFERNT_SCORE = 9;
         public static int CalculateScore(int[][] board)
         {
             // Calculate total for both axes

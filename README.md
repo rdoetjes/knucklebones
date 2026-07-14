@@ -16,7 +16,7 @@ The score is calculated for both the **Rows** and the **Columns** independently,
 For each line (Row or Column):
 - **Single Die**: `value * 1`
 - **Matching Dice**: Summed and then multiplied by their count (e.g., two 3s = `(3+3)*2 = 12`, three 6s = `(6+6+6)*3 = 54`).
-- **Diversity Bonus**: If a line is full (3 dice) and contains **three different values** (e.g., 1, 4, 6), it receives a **+10 bonus**.
+- **Diversity Bonus**: If a line is full (3 dice) and contains **three different values** (e.g., 1, 4, 6), it receives a **+9  bonus**.
 
 ### 3. Destruction (Row & Column)
 When you place a die, it acts as an attack in both directions:
