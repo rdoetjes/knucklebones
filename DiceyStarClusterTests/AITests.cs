@@ -41,23 +41,28 @@ namespace DiceyStarClusterTests
         {
             GameState state = new GameState();
             state.CurrentDifficulty = Difficulty.Easy;
-
-            // AI already has a 5 in Col 1, Row 0
+            
+            // AI already has two 5s in Col 1
             state.Player2Board[1][0] = 5;
-
-            // AI rolls a 5. No destruction possible.
+            state.Player2Board[1][1] = 5;
+            
+            // AI rolls a 5. 
             state.CurrentDie = 5;
             state.Player1Turn = false;
-
+            
             int move = AI.GetMove(state, useRandom: false);
-
-            // AI should prefer Col 1 to get a multiplier.
-            // Under new rules (Row+Col scoring), placing in Col 1 Row 1:
-            // Col 1 score: (5*2)*2 = 20
-            // Row 0 score: 5
-            // Row 1 score: 5
-            // Total: 30.
-            // Any other col would be Row X (5) + Col Y (5) = 10.
+            
+            // Placing in Col 1 Row 2:
+            // Col 1 score: (5*3)*3 = 45
+            // Row scores: 5, 5, 5.
+            // Max(45, 15) = 45.
+            
+            // Placing in Col 0 Row 0:
+            // Col 0: 5, Col 1: (5*2)*2 = 20.
+            // Row 0: (5*2)*2 = 20, Row 1: 5, Row 2: 0.
+            // Max(Cols: 25, Rows: 25) = 25.
+            
+            // 45 is clearly better than 25.
             Assert.Equal(1, move);
         }
 

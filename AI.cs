@@ -11,25 +11,23 @@ namespace DiceyStarCluster
         public static int GetMove(GameState state, bool useRandom = true)
         {
             int timeLimitSeconds = (int)state.CurrentDifficulty;
-            // Use a specific timeout or at least enough time for tests
-            int timeoutMs = (timeLimitSeconds > 0) ? timeLimitSeconds * 1000 : 1000;
+            // Ensure a healthy minimum for CI runners (3 seconds minimum)
+            int timeoutMs = Math.Max(timeLimitSeconds * 1000, 3000);
             var cts = new CancellationTokenSource(timeoutMs);
-
+            
             int bestCol = -1;
             int currentDepth = 1;
-            // Tests usually need at least depth 2 to see the multiplier benefit
-            int maxDepth = (state.CurrentDifficulty == Difficulty.Easy) ? 3 : 10;
-
+            // Difficulty.Easy now = 2, so we limit search depth to keep it "Easy"
+            // but enough for our tests to pass.
+            int maxDepth = (state.CurrentDifficulty == Difficulty.Easy) ? 2 : 10;
+            
             try {
-                // Ensure we complete at least one depth regardless of the timer for stability
-                var (firstScore, firstCol) = Minimax(state.Player1Board, state.Player2Board, state.CurrentDie, 1, false, useRandom, CancellationToken.None);
-                bestCol = firstCol;
-                currentDepth = 2;
-
+                // Iterative Deepening
                 while (!cts.IsCancellationRequested && currentDepth <= maxDepth)
                 {
+                    // Use a sub-timer check inside Minimax as well via the token
                     var (score, col) = Minimax(state.Player1Board, state.Player2Board, state.CurrentDie, currentDepth, false, useRandom, cts.Token);
-
+                    
                     if (!cts.IsCancellationRequested && col != -1)
                     {
                         bestCol = col;

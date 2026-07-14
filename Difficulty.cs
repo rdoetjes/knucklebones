@@ -1,4 +1,4 @@
 namespace DiceyStarCluster
 {
-    public enum Difficulty { Easy = 5, Medium = 6, Hard = 8 }
+    public enum Difficulty { Easy = 2, Medium = 4, Hard = 6 }
 }
