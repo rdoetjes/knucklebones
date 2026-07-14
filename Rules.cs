@@ -4,7 +4,7 @@ namespace KnuckleBones
 {
     public static class Rules
     {
-        const int ALL_DIFFERNT_SCORE = 0;
+        const int ALL_DIFFERNT_SCORE = 10;
         public static int CalculateScore(int[][] board)
         {
             return CalculateRowsScore(board) + CalculateColsScore(board);
@@ -64,7 +64,7 @@ namespace KnuckleBones
             // Option 3: Full House / Diversity Bonus
             if (isFull && distinctCount == 3)
             {
-                total += 15;
+                total += ALL_DIFFERNT_SCORE;
             }
 
             return total;
