@@ -119,7 +119,24 @@ namespace DiceyStarCluster
             {
                 Raylib.DrawTextEx(GameFont, "Current Roll:", new Vector2(ScreenWidth/2 - 55, 10), 20, 2, Color.SkyBlue);
                 Texture2D rollTex = state.Player1Turn ? WhiteDice[state.CurrentDie] : BlackDice[state.CurrentDie];
-                Raylib.DrawTextureEx(rollTex, new Vector2(ScreenWidth/2 - (rollTex.Width * 0.5f)/2, 35), 0, 0.5f, Color.White);
+                
+                // Animation for current die roll: zoom in and overshoot
+                float elapsed = (float)Raylib.GetTime() - state.CurrentDieRoll.StartTime;
+                float duration = 0.25f;
+                float scale = 0.5f;
+
+                if (elapsed < duration)
+                {
+                    // Ease Out Back: t: current time, b: beginning value, c: change in value, d: duration, s: overshoot amount
+                    float t = elapsed / duration;
+                    float s = 1.70158f; 
+                    float backFactor = (t - 1) * (t - 1) * ((s + 1) * (t - 1) + s) + 1;
+                    scale = backFactor * 0.5f;
+                }
+
+                Vector2 pos = new Vector2(ScreenWidth/2 - (rollTex.Width * scale)/2, 35 + (rollTex.Height * 0.5f - rollTex.Height * scale)/2);
+                Raylib.DrawTextureEx(rollTex, pos, 0, scale, Color.White);
+                
                 string turnText = state.Player1Turn ? "<< Your Turn" : "AI Thinking >>";
                 Raylib.DrawTextEx(GameFont, turnText, new Vector2(ScreenWidth/2 - 60, 125), 20, 2, state.Player1Turn ? Color.White : Color.Gray);
             }

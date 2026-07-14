@@ -21,9 +21,17 @@ namespace DiceyStarCluster
         }
         public LastMove? AILastMove = null;
 
+        public struct DieRollState
+        {
+            public int Value;
+            public float StartTime;
+        }
+        public DieRollState CurrentDieRoll;
+
         public GameState()
         {
             CurrentDie = Raylib.GetRandomValue(1, 6);
+            CurrentDieRoll = new DieRollState { Value = CurrentDie, StartTime = (float)Raylib.GetTime() };
         }
 
         public bool PlaceDie(int col, int preferredRow = -1)
@@ -80,6 +88,7 @@ namespace DiceyStarCluster
             {
                 Player1Turn = !Player1Turn;
                 CurrentDie = Raylib.GetRandomValue(1, 6);
+                CurrentDieRoll = new DieRollState { Value = CurrentDie, StartTime = (float)Raylib.GetTime() };
             }
         }
     }
