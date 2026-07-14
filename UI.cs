@@ -65,7 +65,7 @@ namespace KnuckleBones
                 randomZ ? (float)(rng.NextDouble() * 2000 + 10) : 2000
             );
             star.Speed = (float)(rng.NextDouble() * 2.0f + 1.0f);
-            star.StarColor = ColorFromHSV((float)(rng.NextDouble() * 360), 0.6f, 1.0f);
+            star.StarColor = Color.White; // Changed from randomized HSV colors to pure white
         }
 
         public static void UnloadResources()
@@ -146,19 +146,19 @@ namespace KnuckleBones
                 float distFromCenterNormY = Math.Abs(y - ScreenHeight / 2) / (ScreenHeight / 2);
                 float maxDist = Math.Max(distFromCenterNormX, distFromCenterNormY);
                 Color starColor = Color.White;
-                byte alpha = (byte)Math.Clamp(255 - (z / 2000 * 255), 0, 255);
+                byte alpha = (byte)Math.Clamp(255 - (z / 2000 * 150), 100, 255); // Reduced falloff, higher minimum alpha
                 starColor.A = alpha;
                 if (maxDist > 1.0f - edgeThreshold) {
                     float intensity = Math.Clamp((maxDist - (1.0f - edgeThreshold)) / edgeThreshold, 0, 1);
-                    Color redShift = Color.Red; redShift.A = (byte)(alpha * intensity * 0.6f);
-                    Color blueShift = Color.Blue; blueShift.A = (byte)(alpha * intensity * 0.6f);
+                    Color redShift = Color.Red; redShift.A = (byte)(alpha * intensity * 0.8f);
+                    Color blueShift = Color.Blue; blueShift.A = (byte)(alpha * intensity * 0.8f);
                     float shiftAmount = intensity * 4.0f;
-                    Raylib.DrawLineEx(new Vector2(px - shiftAmount, py), new Vector2(x - shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), redShift);
-                    Raylib.DrawLineEx(new Vector2(px + shiftAmount, py), new Vector2(x + shiftAmount, y), Math.Clamp(2.0f / (z / 500), 0.5f, 3.0f), blueShift);
+                    Raylib.DrawLineEx(new Vector2(px - shiftAmount, py), new Vector2(x - shiftAmount, y), Math.Clamp(2.5f / (z / 500), 1.0f, 4.0f), redShift);
+                    Raylib.DrawLineEx(new Vector2(px + shiftAmount, py), new Vector2(x + shiftAmount, y), Math.Clamp(2.5f / (z / 500), 1.0f, 4.0f), blueShift);
                 }
-                Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(2.0f / (z / 500), 0.5f, 5.0f), starColor);
+                Raylib.DrawLineEx(new Vector2(px, py), new Vector2(x, y), Math.Clamp(3.0f / (z / 500), 1.5f, 6.0f), starColor); // Increased thickness
             }
-            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 160));
+            Raylib.DrawRectangle(0, 0, ScreenWidth, ScreenHeight, new Color(0, 0, 0, 130)); // Slightly lighter overlay (was 160)
         }
 
         private static Color ColorFromHSV(float hue, float saturation, float value)
@@ -209,7 +209,7 @@ namespace KnuckleBones
             {
                 int totalGridWidth = 3 * 100 - 20;
                 int p1StartX = (ScreenWidth / 2 - totalGridWidth) / 2;
-                
+
                 if (mousePos.X >= p1StartX && mousePos.X <= p1StartX + gridWidth &&
                     mousePos.Y >= 150 && mousePos.Y <= 150 + gridHeight)
                 {
@@ -225,7 +225,7 @@ namespace KnuckleBones
                     int y = 150 + row * spacing;
 
                     Rectangle rect = new Rectangle(x, y, 80, 80);
-                    
+
                     // Option 4: Destruction Preview
                     // If we are drawing the AI's board (not isPlayer1) and P1 is hovering a column/row,
                     // highlight matching dice in that same row or column on the AI's side.
@@ -272,7 +272,7 @@ namespace KnuckleBones
                 int colScore = Rules.GetLineScore(colValues);
                 string colScoreText = colScore.ToString();
                 Vector2 colScoreSize = Raylib.MeasureTextEx(GameFont, colScoreText, 18, 2);
-                
+
                 // Color logic for combos
                 Color colColor = Color.SkyBlue;
                 var counts = new Dictionary<int, int>();
