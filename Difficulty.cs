@@ -1,4 +1,4 @@
 namespace KnuckleBones
 {
-    public enum Difficulty { Easy = 3, Medium = 5, Hard = 6 }
+    public enum Difficulty { Easy = 5, Medium = 6, Hard = 8 }
 }

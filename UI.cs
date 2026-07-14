@@ -92,8 +92,18 @@ namespace KnuckleBones
             DrawPlayerGrid(state, state.Player1Board, p1StartX, true, Color.White, true);
             DrawPlayerGrid(state, state.Player2Board, p2StartX, false, Color.White, false);
 
+            int player1Rows = Rules.CalculateRowsScore(state.Player1Board);
+            int player1Cols = Rules.CalculateColsScore(state.Player1Board);
+            int player2Rows = Rules.CalculateRowsScore(state.Player2Board);
+            int player2Cols = Rules.CalculateColsScore(state.Player2Board);
+
             Raylib.DrawTextEx(GameFont, $"Player: {state.Player1Score}", new Vector2(p1StartX, 560), 24, 2, Color.White);
+            string p1Breakdown = player1Rows >= player1Cols ? $"(Row Score: {player1Rows})" : $"(Col Score: {player1Cols})";
+            Raylib.DrawTextEx(GameFont, p1Breakdown, new Vector2(p1StartX, 590), 16, 2, Color.Gray);
+
             Raylib.DrawTextEx(GameFont, $"AI: {state.Player2Score}", new Vector2(p2StartX, 560), 24, 2, Color.White);
+            string p2Breakdown = player2Rows >= player2Cols ? $"(Row Score: {player2Rows})" : $"(Col Score: {player2Cols})";
+            Raylib.DrawTextEx(GameFont, p2Breakdown, new Vector2(p2StartX, 590), 16, 2, Color.Gray);
 
             if (state.GameOver)
             {

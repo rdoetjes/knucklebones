@@ -7,7 +7,12 @@ namespace KnuckleBones
         const int ALL_DIFFERNT_SCORE = 10;
         public static int CalculateScore(int[][] board)
         {
-            return CalculateRowsScore(board) + CalculateColsScore(board);
+            // Calculate total for both axes
+            int rowsScore = CalculateRowsScore(board);
+            int colsScore = CalculateColsScore(board);
+            
+            // Rule: Only the axis with the higher score counts
+            return System.Math.Max(rowsScore, colsScore);
         }
 
         public static int CalculateRowsScore(int[][] board)
