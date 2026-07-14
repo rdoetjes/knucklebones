@@ -51,25 +51,24 @@ namespace KnuckleBonesTests
         [Fact]
         public void CalculateScore_UserExample_Returns129()
         {
-            // Board setup ([col][row]):
             // Col 0: 5, 3, 3 -> Score: 5 + (3*2)*2 = 17
             // Col 1: 1, 1, 6 -> Score: (1*2)*2 + 6 = 10
             // Col 2: 5, 6, 6 -> Score: 5 + (6*2)*2 = 29
             // Row 0: 5, 1, 5 -> Score: (5*2)*2 + 1 = 21
-            // Row 1: 3, 1, 6 -> Score: 3+1+6 = 10
+            // Row 1: 3, 1, 6 -> Score: 3+1+6 = 10 (+15 Bonus = 25)
             // Row 2: 3, 6, 6 -> Score: 3 + (6*2)*2 = 27
-            // Diversity Bonuses:
-            // Col 0: no (not full)
-            // Col 1: yes (1, 1, 6 is not 3 distinct) -> wait, (1, 1, 6) has only 2 distinct.
-            // Col 2: no
-            // Row 1: (3, 1, 6) is full and has 3 distinct -> +15 bonus
-            // Total: (17+10+29) + (21+10+27) + 15 = 56 + 58 + 15 = 129
+            // Total: (17+10+29) + (21+25+27) = 56 + 73 = 129
             int[][] board = new int[3][] { 
                 new int[3] { 5, 3, 3 }, 
                 new int[3] { 1, 1, 6 }, 
                 new int[3] { 5, 6, 6 } 
             };
             
+            // Wait, why did it return 114? 129 - 15 = 114. 
+            // It means the Row 1 bonus didn't trigger. 
+            // Is it because Row 1 is NOT full?
+            // Row 1: board[0][1]=3, board[1][1]=1, board[2][1]=6. All > 0.
+            // Let me check GetLineScore logic again.
             Assert.Equal(129, Rules.CalculateScore(board));
         }
 

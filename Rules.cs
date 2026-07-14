@@ -62,10 +62,9 @@ namespace KnuckleBones
             }
 
             // Option 3: Full House / Diversity Bonus
-            // If row/column is full and has 3 different numbers, add 15 points
             if (isFull && distinctCount == 3)
             {
-                total += ALL_DIFFERNT_SCORE;
+                total += 15;
             }
 
             return total;

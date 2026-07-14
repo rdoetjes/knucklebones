@@ -27,7 +27,8 @@ namespace KnuckleBones
             int bestScore = p1Turn ? int.MaxValue : int.MinValue;
             List<int> tiedCols = [];
 
-            foreach (int col in availableCols)
+            object lockObj = new object();
+            System.Threading.Tasks.Parallel.ForEach(availableCols, col =>
             {
                 int[][] nextP1 = CloneBoard(p1Board);
                 int[][] nextP2 = CloneBoard(p2Board);
@@ -57,7 +58,6 @@ namespace KnuckleBones
                     }
                     scoreAfterMove = (int)(averageScore / 6);
                 }
-                // Leaf node or end of depth: evaluate board state
                 else
                 {
                     scoreAfterMove = EvaluateBoard(nextP1, nextP2);
@@ -70,8 +70,8 @@ namespace KnuckleBones
                     
                     if (!p1Turn)
                     {
-                        scoreAfterMove += p1DestructionCount * 150; // Increased weight
-                        scoreAfterMove += p2MatchCount * 80;       // Increased weight
+                        scoreAfterMove += p1DestructionCount * 150;
+                        scoreAfterMove += p2MatchCount * 80;
                     }
                     else
                     {
@@ -80,33 +80,36 @@ namespace KnuckleBones
                     }
                 }
 
-                if (!p1Turn) // AI maximizing
+                lock (lockObj)
                 {
-                    if (scoreAfterMove > bestScore)
+                    if (!p1Turn) // AI maximizing
                     {
-                        bestScore = scoreAfterMove;
-                        tiedCols.Clear();
-                        tiedCols.Add(col);
+                        if (scoreAfterMove > bestScore)
+                        {
+                            bestScore = scoreAfterMove;
+                            tiedCols.Clear();
+                            tiedCols.Add(col);
+                        }
+                        else if (scoreAfterMove == bestScore)
+                        {
+                            tiedCols.Add(col);
+                        }
                     }
-                    else if (scoreAfterMove == bestScore)
+                    else // Player minimizing
                     {
-                        tiedCols.Add(col);
+                        if (scoreAfterMove < bestScore)
+                        {
+                            bestScore = scoreAfterMove;
+                            tiedCols.Clear();
+                            tiedCols.Add(col);
+                        }
+                        else if (scoreAfterMove == bestScore)
+                        {
+                            tiedCols.Add(col);
+                        }
                     }
                 }
-                else // Player minimizing
-                {
-                    if (scoreAfterMove < bestScore)
-                    {
-                        bestScore = scoreAfterMove;
-                        tiedCols.Clear();
-                        tiedCols.Add(col);
-                    }
-                    else if (scoreAfterMove == bestScore)
-                    {
-                        tiedCols.Add(col);
-                    }
-                }
-            }
+            });
 
             int chosenCol = (useRandom) ? tiedCols[new Random().Next(tiedCols.Count)] : tiedCols[0];
             return (bestScore, chosenCol);
