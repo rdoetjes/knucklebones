@@ -1,0 +1,179 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"] # All branches (you can also remove this section for all pushes)
+  pull_request:
+    branches: [main] # PRs targeting main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    #runs-on: [self-hosted, linux]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run Unit Tests
+        run: make tests
+
+      - name: Check for leaks in the code
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y gitleaks
+          gitleaks detect --source $GITHUB_WORKSPACE --log-opts="-p -n 1"
+
+      - name: check supply chain attacks
+        run: |
+          set -e
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sudo sh -s -- -b /usr/local/bin
+          echo "Creating SBOM..."
+          syft scan . --source-name "Dicey Star Cluster" --source-version $GITHUB_SHA --output cyclonedx-json@1.5=sbom.cdx.json
+          echo "Running vulnerability scan..."
+          grype sbom.cdx.json
+
+      - name: Upload SBOM to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-sbom
+          path: sbom.cdx.json
+          retention-days: 1
+
+  build_artifacts:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for tagging
+
+      - name: Calculate Version
+        id: versioning
+        run: |
+          set -e
+          # Debug: show where we are and what is here
+          pwd
+          ls -R
+
+          # Read base version (e.g., 1.0)
+          # We search for the file to be absolutely sure
+          V_FILE=$(find . -name version_base | head -n 1)
+          if [ -z "$V_FILE" ]; then
+            echo "Error: version_base not found anywhere!"
+            exit 1
+          fi
+
+          BASE_VER=$(cat "$V_FILE" | tr -d '[:space:]')
+          echo "Found version_base at: $V_FILE"
+          echo "Base version: '$BASE_VER'"
+
+          if [ -z "$BASE_VER" ]; then
+            echo "Error: BASE_VER is empty!"
+            exit 1
+          fi
+
+          # Find the latest tag that starts with this base version
+          LATEST_TAG=$(git tag -l "${BASE_VER}.*" --sort=-v:refname | head -n 1)
+          echo "Latest tag found: '$LATEST_TAG'"
+
+          if [ -z "$LATEST_TAG" ]; then
+            NEW_TAG="${BASE_VER}.0"
+          else
+            # Increment the patch number
+            PATCH=$(echo $LATEST_TAG | awk -F. '{print $NF}')
+            NEW_PATCH=$((PATCH + 1))
+            NEW_TAG="${BASE_VER}.${NEW_PATCH}"
+          fi
+
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "Calculated version: $NEW_TAG"
+
+      - name: Create and Push Tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.versioning.outputs.tag }}
+          git push origin ${{ steps.versioning.outputs.tag }}
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip tar
+
+      - name: Make Dist
+        env:
+          VERSION: ${{ steps.versioning.outputs.tag }}
+        run: |
+          make dist
+
+      - name: Download SBOM from GitHub Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-sbom
+          path: dist
+
+      - name: Rename SBOM for upload
+        run: mv dist/sbom.cdx.json dist/sbom.json
+
+      - name: Upload to Artifactory and Vault
+        if: github.ref == 'refs/heads/main'
+        run: |
+          set -euo pipefail
+
+          # Get credentials from Vault
+          pass=$(curl --fail -s -H "X-Vault-Token: ${{ secrets.VAULT_TOKEN }}" "${{ vars.VAULT_ADDR }}/v1/kv/data/prod/artifactory/ci" | jq -r '.data.data.password')
+          iso=$(date +%Y%m%d%H%M)
+
+          # Base URL for Artifactory
+          VERSION="${{ steps.versioning.outputs.tag }}"
+          BASE_URL="https://stratos01.phonax.com/artifactory/internal_release/dittle/$VERSION"
+
+          # 1. Upload Binary Artifacts
+          for file in dist/*.{zip,tar.gz}; do
+            [ -e "$file" ] || continue
+            filename=$(basename "$file")
+
+            if [[ $filename == *.tar.gz ]]; then
+              new_name="${filename%.tar.gz}-$VERSION-$iso.tar.gz"
+            else
+              new_name="${filename%.zip}-$VERSION-$iso.zip"
+            fi
+
+            MD5=$(md5sum "$file" | awk '{print $1}')
+            SHA1=$(sha1sum "$file" | awk '{print $1}')
+
+            echo "Uploading $filename as $new_name"
+            curl --fail-with-body -s -u "ci:$pass" -X PUT -T "$file" \
+              -H "X-Checksum-Md5: $MD5" -H "X-Checksum-Sha1: $SHA1" \
+              "$BASE_URL/$new_name"
+          done
+
+          # 2. Upload the single Source SBOM
+          SBOM="dist/sbom.json"
+          if [ -f "$SBOM" ]; then
+            new_name="dicestarcluster-sbom-$VERSION-$iso.json"
+            MD5_S=$(md5sum "$SBOM" | awk '{print $1}')
+            SHA1_S=$(sha1sum "$SBOM" | awk '{print $1}')
+
+            echo "Uploading Source SBOM as $new_name"
+            curl --fail-with-body -s -u "ci:$pass" -X PUT -T "$SBOM" \
+              -H "X-Checksum-Md5: $MD5_S" -H "X-Checksum-Sha1: $SHA1_S" \
+              "$BASE_URL/$new_name"
+          fi
