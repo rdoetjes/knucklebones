@@ -168,12 +168,12 @@ jobs:
           # 2. Upload the single Source SBOM
           SBOM="dist/sbom.json"
           if [ -f "$SBOM" ]; then
-            new_name="dicestarcluster-sbom-$VERSION-$iso.json"
+            new_name="diceystarcluster-sbom-$VERSION-$iso.json"
             MD5_S=$(md5sum "$SBOM" | awk '{print $1}')
             SHA1_S=$(sha1sum "$SBOM" | awk '{print $1}')
 
             echo "Uploading Source SBOM as $new_name"
-            curl --fail-with-body -s -u "ci:$pass" -X PUT -T "$SBOM" \
+            curl --fail-with-body -u "ci:$pass" -X PUT -T "$SBOM" \
               -H "X-Checksum-Md5: $MD5_S" -H "X-Checksum-Sha1: $SHA1_S" \
               "$BASE_URL/$new_name"
           fi
