@@ -4,6 +4,7 @@ namespace KnuckleBones
 {
     public static class Rules
     {
+        const int ALL_DIFFERNT_SCORE = 0;
         public static int CalculateScore(int[][] board)
         {
             return CalculateRowsScore(board) + CalculateColsScore(board);
@@ -64,7 +65,7 @@ namespace KnuckleBones
             // If row/column is full and has 3 different numbers, add 15 points
             if (isFull && distinctCount == 3)
             {
-                total += 15;
+                total += ALL_DIFFERNT_SCORE;
             }
 
             return total;
