@@ -51,7 +51,7 @@ namespace DiceyStarCluster
             StarShader = Raylib.LoadShader(null, shaderPath);
             TimeLoc = Raylib.GetShaderLocation(StarShader, "time");
             ResLoc = Raylib.GetShaderLocation(StarShader, "resolution");
-            
+
             float[] res = { (float)ScreenWidth, (float)ScreenHeight };
             Raylib.SetShaderValue(StarShader, ResLoc, res, ShaderUniformDataType.Vec2);
         }
@@ -92,7 +92,7 @@ namespace DiceyStarCluster
 
         private static void DrawLayout(GameState state)
         {
-            DrawGradientLine(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 9);
+            //DrawGradientLine(new Vector2(ScreenWidth / 2, 0), new Vector2(ScreenWidth / 2, ScreenHeight), 9);
 
             int totalGridWidth = 3 * 100 - 20;
             int p1StartX = (ScreenWidth / 2 - totalGridWidth) / 2;
