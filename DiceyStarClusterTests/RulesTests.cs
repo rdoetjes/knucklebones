@@ -10,8 +10,8 @@ namespace DiceyStarClusterTests
         {
             int[][] board = new int[3][] { new int[3], new int[3], new int[3] };
             board[0][0] = 5;
-            
-            // Row 0 has a 5 (score 5) 
+
+            // Row 0 has a 5 (score 5)
             // Col 0 has a 5 (score 5)
             // Max is 5
             Assert.Equal(5, Rules.CalculateScore(board));
@@ -21,12 +21,12 @@ namespace DiceyStarClusterTests
         public void CalculateScore_DoubleInRow_ReturnsMultipliedScore()
         {
             // Row 0 has two 5s in Col 0 and Col 1
-            int[][] board = new int[3][] { 
-                new int[3] { 5, 0, 0 }, 
-                new int[3] { 5, 0, 0 }, 
-                new int[3] { 0, 0, 0 } 
+            int[][] board = new int[3][] {
+                new int[3] { 5, 0, 0 },
+                new int[3] { 5, 0, 0 },
+                new int[3] { 0, 0, 0 }
             };
-            
+
             // Row 0: two 5s = (5*2)*2 = 20
             // Col 0: one 5 = 5
             // Col 1: one 5 = 5
@@ -40,12 +40,12 @@ namespace DiceyStarClusterTests
         public void CalculateScore_TripleInRow_ReturnsMultipliedScore()
         {
             // Row 0 has three 6s
-            int[][] board = new int[3][] { 
-                new int[3] { 6, 0, 0 }, 
-                new int[3] { 6, 0, 0 }, 
-                new int[3] { 6, 0, 0 } 
+            int[][] board = new int[3][] {
+                new int[3] { 6, 0, 0 },
+                new int[3] { 6, 0, 0 },
+                new int[3] { 6, 0, 0 }
             };
-            
+
             // Row 0: three 6s = (6*3)*3 = 54
             // Col 0, 1, 2: one 6 each = 6*3 = 18
             // Rows total = 54
@@ -59,39 +59,39 @@ namespace DiceyStarClusterTests
         {
             // Rows breakdown:
             // Row 0: 5, 1, 5 -> (5*2)*2 + 1 = 21
-            // Row 1: 3, 1, 6 -> 3 + 1 + 6 = 10 (+10 Bonus = 20)
+            // Row 1: 3, 1, 6 -> 3 + 1 + 6 = 10 (+9 Bonus = 19)
             // Row 2: 3, 6, 6 -> 3 + (6*2)*2 = 27
-            // Total Rows = 21 + 20 + 27 = 68
-            
+            // Total Rows = 21 + 19 + 27 = 67
+
             // Cols breakdown:
             // Col 0: 5, 3, 3 -> 5 + (3*2)*2 = 17
             // Col 1: 1, 1, 6 -> (1*2)*2 + 6 = 10
             // Col 2: 5, 6, 6 -> 5 + (6*2)*2 = 29
             // Total Cols = 17 + 10 + 29 = 56
-            
-            // Max(56, 68) = 68
-            int[][] board = new int[3][] { 
-                new int[3] { 5, 3, 3 }, 
-                new int[3] { 1, 1, 6 }, 
-                new int[3] { 5, 6, 6 } 
+
+            // Max(56, 67) = 67
+            int[][] board = new int[3][] {
+                new int[3] { 5, 3, 3 },
+                new int[3] { 1, 1, 6 },
+                new int[3] { 5, 6, 6 }
             };
-            
-            Assert.Equal(68, Rules.CalculateScore(board));
+
+            Assert.Equal(67, Rules.CalculateScore(board));
         }
 
         [Fact]
         public void HandleDestruction_RemovesMatchingOpponentDiceInSameRowAndCol()
         {
             // opponentBoard is [col][row]
-            int[][] opponentBoard = new int[3][] { 
+            int[][] opponentBoard = new int[3][] {
                 new int[3] { 5, 5, 0 }, // Col 0: Row0=5, Row1=5
                 new int[3] { 5, 0, 0 }, // Col 1: Row0=5
                 new int[3] { 1, 0, 0 }  // Col 2: Row0=1
             };
-            
+
             // Player places a 5 in Col 0, Row 0
             Rules.HandleDestruction(0, 0, 5, opponentBoard);
-            
+
             Assert.Equal(0, opponentBoard[0][0]); // Same cell
             Assert.Equal(0, opponentBoard[1][0]); // Same row (Row 0, Col 1)
             Assert.Equal(0, opponentBoard[0][1]); // Same col (Col 0, Row 1)

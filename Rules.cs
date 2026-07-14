@@ -4,7 +4,8 @@ namespace DiceyStarCluster
 {
     public static class Rules
     {
-        const int ALL_DIFFERNT_SCORE = 9;
+        const int ALL_DIFFERENT_SCORE = 9;
+
         public static int CalculateScore(int[][] board)
         {
             // Calculate total for both axes
@@ -66,10 +67,10 @@ namespace DiceyStarCluster
                 total += (val * count) * count;
             }
 
-        // Option 3: Full House / Diversity Bonus
+            // Diversity Bonus
             if (isFull && distinctCount == 3)
             {
-                total += ALL_DIFFERNT_SCORE;
+                total += ALL_DIFFERENT_SCORE;
             }
 
             return total;
